@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinMate Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe, #f1f5f9);
+      min-height: 100vh;
+      color: #0f172a;
+    }
+
+    .dashboard-wrapper {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      background: #1e3a8a;
+      color: white;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+
+    .summary-item {
+      text-align: center;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      transition: transform 0.3s;
+    }
+
+    .summary-item:hover {
+      transform: translateY(-5px);
+    }
+
+    .summary-item i {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .summary-item p {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    .filter-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-controls label {
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-controls select,
+    .filter-controls input {
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .filter-controls button {
+      padding: 8px 16px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .filter-controls button:hover {
+      background: #1e40af;
+    }
+
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s;
+    }
+
+    .chart-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .chart {
+      max-height: 300px;
+    }
+
+    .transactions-table {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    th {
+      background: #1e3a8a;
+      color: white;
+      font-weight: 500;
+    }
+
+    td {
+      background: #f8fafc;
+    }
+
+    .export-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .export-btn:hover {
+      background: #218838;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-wrapper {
+        margin: 10px;
+        padding: 15px;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .charts-container {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Summary Section -->
+    <div class="summary">
+      <div class="summary-item">
+        <i class="fas fa-money-bill-wave"></i>
+        <p id="totalIncome">Total Income: ₹0</p>
+      </div>
+      <div class="summary-item">
+        <i class="fas fa-shopping-cart"></i>
+        <p id="totalExpense">Total Expense: ₹0</p>
+      </div>
+      <div class="summary-item">
+        <i class="fas fa-balance-scale"></i>
+        <p id="balance">Balance: ₹0</p>
+      </div>
+      <div class="summary-item">
+        <i class="fas fa-wallet"></i>
+        <p id="budgetProgress">Budget: $0 / $0</p>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-controls">
+      <label>
+        <i class="fas fa-filter"></i> Category:
+        <select id="categoryFilter" aria-label="Filter by category">
+          <option value="all">All</option>
+        </select>
+      </label>
+      <label>
+        <i class="fas fa-filter"></i> Type:
+        <select id="typeFilter" aria-label="Filter by type">
+          <option value="all">All</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </label>
+      <label>
+        <i class="fas fa-calendar"></i> Start Date:
+        <input type="date" id="startDateFilter" aria-label="Start date" />
+      </label>
+      <label>
+        <i class="fas fa-calendar"></i> End Date:
+        <input type="date" id="endDateFilter" aria-label="End date" />
+      </label>
+      <button onclick="applyFilters()"><i class="fas fa-check"></i> Apply</button>
+      <button onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-container">
+      <div class="chart-card">
+        <h3>Budget Progress</h3>
+        <canvas id="budgetChart" class="chart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Category-wise Spending</h3>
+        <canvas id="categoryChart" class="chart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Income vs. Expense Trend</h3>
+        <canvas id="trendChart" class="chart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Transaction Frequency</h3>
+        <canvas id="frequencyChart" class="chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="transactions-table">
+      <h3>Transaction History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="transactionList"></tbody>
+      </table>
+      <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+    </div>
+  </div>
+
+  <script>
+    // Load data from localStorage
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [
+      { desc: 'Salary', amount: 50000, type: 'income', category: 'Salary', date: '2025-04-01' },
+      { desc: 'Grocery', amount: 2000, type: 'expense', category: 'Food', date: '2025-04-02' },
+      { desc: 'Freelance Work', amount: 15000, type: 'income', category: 'Freelance', date: '2025-04-03' },
+      { desc: 'Transport', amount: 1500, type: 'expense', category: 'Travel', date: '2025-04-04' },
+      { desc: 'Rent', amount: 12000, type: 'expense', category: 'Rent', date: '2025-04-05' },
+      { desc: 'Bonus', amount: 10000, type: 'income', category: 'Salary', date: '2025-04-06' },
+    ];
+    let budgetGoal = parseFloat(localStorage.getItem('budgetGoal')) || 0;
+    let currentAmount = parseFloat(localStorage.getItem('currentAmount')) || 0;
+
+    let budgetChartInstance, categoryChartInstance, trendChartInstance, frequencyChartInstance;
+
+    function populateCategoryFilter() {
+      const select = document.getElementById('categoryFilter');
+      const categories = [...new Set(transactions.map(tx => tx.category))];
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+      });
+    }
+
+    function renderTransactions(filtered = transactions) {
+      const transactionList = document.getElementById('transactionList');
+      transactionList.innerHTML = '';
+      filtered.forEach(tx => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${tx.desc}</td>
+          <td>₹${tx.amount.toFixed(2)}</td>
+          <td>${tx.type}</td>
+          <td>${tx.category}</td>
+          <td>${tx.date}</td>
+        `;
+        transactionList.appendChild(row);
+      });
+    }
+
+    function calculateSummary(filtered = transactions) {
+      let totalIncome = 0, totalExpense = 0;
+      filtered.forEach(tx => {
+        if (tx.type === 'income') totalIncome += tx.amount;
+        else if (tx.type === 'expense') totalExpense += tx.amount;
+      });
+      document.getElementById('totalIncome').textContent = `Total Income: ₹${totalIncome.toFixed(2)}`;
+      document.getElementById('totalExpense').textContent = `Total Expense: ₹${totalExpense.toFixed(2)}`;
+      document.getElementById('balance').textContent = `Balance: ₹${(totalIncome - totalExpense).toFixed(2)}`;
+      document.getElementById('budgetProgress').textContent = `Budget: $${currentAmount.toFixed(2)} / $${budgetGoal.toFixed(2)}`;
+    }
+
+    function renderCharts(filtered = transactions) {
+      // Budget Progress Chart
+      if (budgetChartInstance) budgetChartInstance.destroy();
+      const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+      budgetChartInstance = new Chart(budgetCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Spent', 'Remaining'],
+          datasets: [{
+            data: [currentAmount, Math.max(0, budgetGoal - currentAmount)],
+            backgroundColor: ['#4B90D9', '#e4e7eb'],
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { enabled: true },
+          },
+        },
+      });
+
+      // Category-wise Spending Chart
+      if (categoryChartInstance) categoryChartInstance.destroy();
+      const categories = filtered.reduce((acc, tx) => {
+        if (tx.type === 'expense') {
+          acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
+        }
+        return acc;
+      }, {});
+      const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+      categoryChartInstance = new Chart(categoryCtx, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(categories),
+          datasets: [{
+            data: Object.values(categories),
+            backgroundColor: ['#ff6b6b', '#4ecdc4', '#feca57', '#1e40af', '#9b59b6'],
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { enabled: true },
+          },
+        },
+      });
+
+      // Income vs. Expense Trend Chart
+      if (trendChartInstance) trendChartInstance.destroy();
+      const dates = [...new Set(filtered.map(tx => tx.date))].sort();
+      const incomeData = dates.map(date => {
+        return filtered.filter(tx => tx.date === date && tx.type === 'income')
+          .reduce((sum, tx) => sum + tx.amount, 0);
+      });
+      const expenseData = dates.map(date => {
+        return filtered.filter(tx => tx.date === date && tx.type === 'expense')
+          .reduce((sum, tx) => sum + tx.amount, 0);
+      });
+      const trendCtx = document.getElementById('trendChart').getContext('2d');
+      trendChartInstance = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Income',
+              data: incomeData,
+              borderColor: '#2563eb',
+              fill: false,
+            },
+            {
+              label: 'Expense',
+              data: expenseData,
+              borderColor: '#ef4444',
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Date' } },
+            y: { title: { display: true, text: 'Amount (₹)' }, beginAtZero: true },
+          },
+        },
+      });
+
+      // Transaction Frequency Chart
+      if (frequencyChartInstance) frequencyChartInstance.destroy();
+      const frequency = filtered.reduce((acc, tx) => {
+        acc[tx.category] = (acc[tx.category] || 0) + 1;
+        return acc;
+      }, {});
+      const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
+      frequencyChartInstance = new Chart(frequencyCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(frequency),
+          datasets: [{
+            label: 'Transactions',
+            data: Object.values(frequency),
+            backgroundColor: '#4B90D9',
+          }],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Category' } },
+            y: { title: { display: true, text: 'Number of Transactions' }, beginAtZero: true },
+          },
+        },
+      });
+    }
+
+    function applyFilters() {
+      const category = document.getElementById('categoryFilter').value;
+      const type = document.getElementById('typeFilter').value;
+      const startDate = document.getElementById('startDateFilter').value;
+      const endDate = document.getElementById('endDateFilter').value;
+
+      let filtered = transactions;
+
+      if (category !== 'all') {
+        filtered = filtered.filter(tx => tx.category === category);
+      }
+
+      if (type !== 'all') {
+        filtered = filtered.filter(tx => tx.type === type);
+      }
+
+      if (startDate) {
+        filtered = filtered.filter(tx => tx.date >= startDate);
+      }
+
+      if (endDate) {
+        filtered = filtered.filter(tx => tx.date <= endDate);
+      }
+
+      if (filtered.length === 0) {
+        alert('No transactions match the selected filters.');
+      }
+
+      renderTransactions(filtered);
+      calculateSummary(filtered);
+      renderCharts(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById('categoryFilter').value = 'all';
+      document.getElementById('typeFilter').value = 'all';
+      document.getElementById('startDateFilter').value = '';
+      document.getElementById('endDateFilter').value = '';
+      renderTransactions();
+      calculateSummary();
+      renderCharts();
+    }
+
+    function exportToCSV() {
+      const headers = ['Description,Amount,Type,Category,Date'];
+      const rows = transactions.map(tx => `${tx.desc},${tx.amount},${tx.type},${tx.category},${tx.date}`);
+      const csv = [...headers, ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'transactions.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    // Initialize
+    window.onload = () => {
+      populateCategoryFilter();
+      renderTransactions();
+      calculateSummary();
+      renderCharts();
+    };
+  </script>
+</body>
+</html>
